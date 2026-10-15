@@ -200,7 +200,7 @@ const PROJECTS = [
         type: 'image',
         src: 'assets/media/mypilot/settings.png',
         alt: 'MyPilot 设置窗口：左侧是分组列表，右侧是开关和选项',
-        ratio: '19/15',
+        ratio: '1508/1184',
         caption: '设置也是系统设置那种分组：左边挑分类，右边直接改，改完立刻生效，不用点保存。'
       },
       {
@@ -209,6 +209,13 @@ const PROJECTS = [
         alt: '录音浮层的四种状态：正在听、识别中、已输入、出错了',
         ratio: '380/471',
         caption: '录音时屏幕底部就这一行：音量波形、时长和状态，不抢焦点，说完自己消失。'
+      },
+      {
+        type: 'image',
+        src: 'assets/media/mypilot/tools.png',
+        alt: 'MyPilot 工具分组：连通性自检，以及配置文件、日志、历史记录、录音文件的打开与清空',
+        ratio: '1502/1182',
+        caption: '连通性自检、日志、历史记录、录音文件都在设置里管，不用去翻文件夹。'
       }
     ]
   },
