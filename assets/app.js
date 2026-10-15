@@ -12,6 +12,10 @@
     'stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
     '<path d="M6 3.5 10.5 8 6 12.5"/></svg>';
 
+  var CHEVRON_LEFT = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" ' +
+    'stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+    '<path d="M10 3.5 5.5 8 10 12.5"/></svg>';
+
   /* 图标：18×18 描边，颜色跟着图标自己的 --c 走 */
   var ICONS = {
     swap: '<path d="M2.4 4.9h9.8"/><path d="M10.2 2.9 12.2 4.9 10.2 6.9"/>' +
@@ -155,7 +159,7 @@
     return '--rw:' + w + ';--rh:' + h;
   }
 
-  function shotHTML(m) {
+  function shotHTML(m, index, showNav) {
     var isVideo = m.type === 'video';
     var frame = isVideo
       ? '<video src="' + esc(m.src) + '"' + (m.poster ? ' poster="' + esc(m.poster) + '"' : '') +
@@ -163,9 +167,18 @@
       : '<img src="' + esc(m.src) + '" alt="' + esc(m.alt || m.caption || '') + '"' +
         ' loading="lazy" decoding="async" />';
 
-    return '<figure class="shot" style="' + ratioVars(m.ratio) + '">' +
-      '<div class="shot-frame">' + frame + '</div>' +
-      (m.caption ? '<figcaption>' + esc(m.caption) + '</figcaption>' : '') +
+    // 走马灯：一屏一张，箭头跟在这张图的两侧
+    var nav = showNav
+      ? '<button type="button" class="mnav" data-shot-step="-1" aria-label="上一张">' + CHEVRON_LEFT + '</button>' +
+        '<button type="button" class="mnav" data-shot-step="1" aria-label="下一张">' + CHEVRON + '</button>'
+      : '';
+
+    // 箭头放进画框里，这样框按图片比例撑开之后，箭头仍然居中
+    return '<figure class="shot"' + (index > 0 ? ' hidden' : '') + ' style="' + ratioVars(m.ratio) + '">' +
+      '<div class="shot-inner">' +
+        '<div class="shot-stage"><div class="shot-frame">' + frame + '</div>' + nav + '</div>' +
+        (m.caption ? '<figcaption>' + esc(m.caption) + '</figcaption>' : '') +
+      '</div>' +
       '</figure>';
   }
 
@@ -182,8 +195,10 @@
     var panels = SHOT_TABS.map(function (t) {
       var items = shotsOf(p, t.type);
       var body = items.length
-        ? '<div class="shots" tabindex="0" role="region" aria-label="' +
-          esc(p.name + ' ' + t.label) + '">' + items.map(shotHTML).join('') + '</div>'
+        ? '<div class="gallery" data-gallery tabindex="0" role="group" aria-label="' +
+          esc(p.name + ' ' + t.label) + '">' +
+          items.map(function (m, i) { return shotHTML(m, i, items.length > 1); }).join('') +
+          '</div>'
         : emptyShotsHTML(p, t);
       return '<div class="mpanel" data-media-panel="' + t.type + '"' +
         (t.type === first.type ? '' : ' hidden') + '>' + body + '</div>';
@@ -193,7 +208,8 @@
     if (!(p.media || []).length) {
       return '<h2>实际效果</h2>' + emptyShotsHTML(p, SHOT_TABS[0]);
     }
-    return '<div class="secbar"><h2>实际效果</h2>' + tabs + '</div>' + panels;
+    return '<div class="secbar"><h2>实际效果</h2>' +
+      '<div class="secbar-r">' + tabs + '</div></div>' + panels;
   }
 
   function emptyShotsHTML(p, tab) {
@@ -202,6 +218,44 @@
       '<p class="d">' + tab.hint + ' <code>assets/media/' + esc(p.id) + '/</code>，' +
       '再到 <code>assets/projects.js</code> 里补一条 <code>media</code>，这里就会显示出来。</p>' +
       '</div>';
+  }
+
+  /* 走马灯：一屏一张，翻页靠图片两侧的箭头（或方向键） */
+  function visiblePanel(section) {
+    var panels = $$('[data-media-panel]', section);
+    for (var i = 0; i < panels.length; i++) {
+      if (!panels[i].hidden) return panels[i];
+    }
+    return null;
+  }
+
+  function currentShotIndex(gallery) {
+    var items = $$('.shot', gallery);
+    for (var i = 0; i < items.length; i++) {
+      if (!items[i].hidden) return i;
+    }
+    return 0;
+  }
+
+  /* 第一张「上一张」没得点，最后一张「下一张」没得点 */
+  function updateShotNav(gallery) {
+    var items = $$('.shot', gallery);
+    items.forEach(function (item, i) {
+      var prev = $('[data-shot-step="-1"]', item);
+      var next = $('[data-shot-step="1"]', item);
+      if (prev) prev.disabled = i === 0;
+      if (next) next.disabled = i === items.length - 1;
+    });
+  }
+
+  function stepShots(gallery, dir) {
+    var items = $$('.shot', gallery);
+    if (items.length < 2) return;
+    var from = currentShotIndex(gallery);
+    var to = Math.min(Math.max(from + dir, 0), items.length - 1);
+    if (to === from) return;
+    items.forEach(function (item, i) { item.hidden = i !== to; });
+    updateShotNav(gallery);
   }
 
   /* ----------------------------------------------------------- 项目主页 */
@@ -274,6 +328,7 @@
 
     if (p) {
       viewProject.innerHTML = projectHTML(p);
+      $$('[data-gallery]', viewProject).forEach(updateShotNav);
       viewProject.style.setProperty('--c', p.accent);
       viewIndex.hidden = true;
       viewProject.hidden = false;
@@ -298,7 +353,17 @@
 
   /* --------------------------------------------------- 展示区：切换 tab */
   document.addEventListener('click', function (e) {
-    var btn = e.target && e.target.closest ? e.target.closest('[data-media-tab]') : null;
+    var target = e.target;
+    if (!target || !target.closest) return;
+
+    var step = target.closest('[data-shot-step]');
+    if (step) {
+      var gallery = step.closest('[data-gallery]');
+      if (gallery) stepShots(gallery, parseInt(step.dataset.shotStep, 10));
+      return;
+    }
+
+    var btn = target.closest('[data-media-tab]');
     if (!btn) return;
     var section = btn.closest('[data-media]');
     if (!section) return;
@@ -313,6 +378,15 @@
 
   /* --------------------------------------------------------------- 键盘 */
   document.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+      var focused = document.activeElement;
+      var gallery = focused && focused.closest ? focused.closest('[data-gallery]') : null;
+      if (gallery) {
+        e.preventDefault();
+        stepShots(gallery, e.key === 'ArrowRight' ? 1 : -1);
+      }
+      return;
+    }
     var onIndex = !viewIndex.hidden;
     if (e.key === '/') {
       var tag = (document.activeElement.tagName || '').toLowerCase();
