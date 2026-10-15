@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>杂货铺</title>
+<meta name="description" content="一些有意思、有用、好玩的东西：UniToken、UniContext、ruoyi-ai-quick-starter、CallPilot、MyPilot、Earth Spacetime。" />
+<script>
+  // 先定主题再上样式，避免闪一下
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('sp-theme'); } catch (e) {}
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@700&display=swap" />
+<link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body>
+
+<header class="top">
+  <div class="shell top-inner">
+    <div class="themes" role="group" aria-label="主题">
+      <button type="button" data-theme-set="light" aria-pressed="false">浅色</button>
+      <button type="button" data-theme-set="dark" aria-pressed="false">深色</button>
+    </div>
+  </div>
+</header>
+
+<!-- 索引视图 -->
+<main class="shell view" id="viewIndex">
+  <div class="masthead">
+    <p class="micro" id="micro"></p>
+    <h1>杂货铺</h1>
+    <p>平时折腾的一些东西。有意思的、有用的、好玩的，都在这儿。</p>
+  </div>
+
+  <div class="list-head">
+    <span class="h-idx" aria-hidden="true"></span>
+    <span class="h-label" aria-hidden="true">项目</span>
+    <span class="h-find">
+      <label class="only-sr" for="q">筛选</label>
+      <input id="q" type="search" placeholder="筛选" autocomplete="off" />
+      <kbd aria-hidden="true">/</kbd>
+    </span>
+    <span class="h-tail" aria-hidden="true"></span>
+  </div>
+
+  <div id="list"></div>
+  <div class="blank" id="blank" hidden>没有匹配的项目。</div>
+</main>
+
+<!-- 项目主页视图 -->
+<main class="shell view" id="viewProject" hidden></main>
+
+<footer>
+  <div class="shell">更新于 2026-10-15</div>
+</footer>
+
+<script src="assets/projects.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>
